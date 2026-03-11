@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Score Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏏 IPL Score Predictor</h1>
+            <p class="subtitle">Predict the next ball's score using advanced ML algorithms</p>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <form id="predictionForm">
+                    <div class="form-grid">
+                        <!-- Team Selection -->
+                        <div class="form-group">
+                            <label for="batting_team">Batting Team</label>
+                            <select id="batting_team" name="batting_team" required>
+                                <option value="">Select Team</option>
+                                <option value="MI">Mumbai Indians</option>
+                                <option value="CSK">Chennai Super Kings</option>
+                                <option value="RCB">Royal Challengers Bangalore</option>
+                                <option value="KKR">Kolkata Knight Riders</option>
+                                <option value="DC">Delhi Capitals</option>
+                                <option value="SRH">Sunrisers Hyderabad</option>
+                                <option value="RR">Rajasthan Royals</option>
+                                <option value="PBKS">Punjab Kings</option>
+                                <option value="GT">Gujarat Titans</option>
+                                <option value="LSG">Lucknow Super Giants</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bowling_team">Bowling Team</label>
+                            <select id="bowling_team" name="bowling_team" required>
+                                <option value="">Select Team</option>
+                                <option value="MI">Mumbai Indians</option>
+                                <option value="CSK">Chennai Super Kings</option>
+                                <option value="RCB">Royal Challengers Bangalore</option>
+                                <option value="KKR">Kolkata Knight Riders</option>
+                                <option value="DC">Delhi Capitals</option>
+                                <option value="SRH">Sunrisers Hyderabad</option>
+                                <option value="RR">Rajasthan Royals</option>
+                                <option value="PBKS">Punjab Kings</option>
+                                <option value="GT">Gujarat Titans</option>
+                                <option value="LSG">Lucknow Super Giants</option>
+                            </select>
+                        </div>
+
+                        <!-- Player Selection -->
+                        <div class="form-group">
+                            <label for="batsman">Batsman on Strike</label>
+                            <input type="text" id="batsman" name="batsman" placeholder="Enter batsman name" required>
+                            <small>e.g., Virat Kohli, MS Dhoni, Rohit Sharma</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bowler">Bowler</label>
+                            <input type="text" id="bowler" name="bowler" placeholder="Enter bowler name" required>
+                            <small>e.g., Jasprit Bumrah, Ravindra Jadeja, Yuzvendra Chahal</small>
+                        </div>
+
+                        <!-- Stadium -->
+                        <div class="form-group">
+                            <label for="stadium">Stadium</label>
+                            <select id="stadium" name="stadium" required>
+                                <option value="">Select Stadium</option>
+                                <option value="Wankhede Stadium">Wankhede Stadium (Mumbai)</option>
+                                <option value="M. Chinnaswamy Stadium">M. Chinnaswamy Stadium (Bangalore)</option>
+                                <option value="Eden Gardens">Eden Gardens (Kolkata)</option>
+                                <option value="Feroz Shah Kotla">Feroz Shah Kotla (Delhi)</option>
+                                <option value="MA Chidambaram Stadium">MA Chidambaram Stadium (Chennai)</option>
+                                <option value="Rajiv Gandhi Stadium">Rajiv Gandhi Stadium (Hyderabad)</option>
+                                <option value="Sawai Mansingh Stadium">Sawai Mansingh Stadium (Jaipur)</option>
+                                <option value="IS Bindra Stadium">IS Bindra Stadium (Mohali)</option>
+                                <option value="Narendra Modi Stadium">Narendra Modi Stadium (Ahmedabad)</option>
+                                <option value="BRSABV Ekana Stadium">BRSABV Ekana Stadium (Lucknow)</option>
+                            </select>
+                        </div>
+
+                        <!-- Match Status -->
+                        <div class="form-group">
+                            <label for="current_over">Current Over (e.g., 12.3)</label>
+                            <input type="number" id="current_over" name="current_over" step="0.1" min="0" max="20" value="10.0" required>
+                            <small>Enter over in decimal format (e.g., 12.3 = 12 overs 3 balls)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="current_score">Current Score</label>
+                            <input type="number" id="current_score" name="current_score" min="0" value="100" required>
+                            <small>Total runs scored so far</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="current_wickets">Current Wickets</label>
+                            <input type="number" id="current_wickets" name="current_wickets" min="0" max="10" value="2" required>
+                            <small>Number of wickets fallen (0-10)</small>
+                        </div>
+
+                        <!-- Pitch Conditions -->
+                        <div class="form-group full-width">
+                            <label for="pitch_moisture">Pitch Moisture Level (%)</label>
+                            <input type="range" id="pitch_moisture" name="pitch_moisture" min="0" max="100" value="50">
+                            <div class="range-value">
+                                <span id="moistureValue">50%</span>
+                                <span class="range-label">
+                                    <span>Dry</span>
+                                    <span>Normal</span>
+                                    <span>Moist</span>
+                                </span>
+                            </div>
+                            <small>Higher moisture = easier batting conditions</small>
+                        </div>
+
+                        <!-- Ball Type -->
+                        <div class="form-group full-width">
+                            <label for="ball_type">Ball Type</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="ball_type" value="regular" checked>
+                                    <span>Regular</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="ball_type" value="yorker">
+                                    <span>Yorker</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="ball_type" value="bouncer">
+                                    <span>Bouncer</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="ball_type" value="slower">
+                                    <span>Slower Ball</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="ball_type" value="full_toss">
+                                    <span>Full Toss</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="ball_type" value="wide">
+                                    <span>Wide</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="ball_type" value="no_ball">
+                                    <span>No Ball</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="predict-btn">
+                            <span>Predict Next Ball</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        <button type="button" id="predictFinalBtn" class="predict-btn final-score-btn">
+                            <span>Predict Final Score</span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2v20M2 12h20"/>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results" class="results-container" style="display: none;">
+                <h2>Prediction Results</h2>
+                <div class="prediction-card">
+                    <div class="predicted-score">
+                        <span class="score-label">Predicted Runs</span>
+                        <span class="score-value" id="predictedRuns">0</span>
+                    </div>
+                    
+                    <div class="factors-section">
+                        <h3>Influencing Factors</h3>
+                        <div class="factors-grid">
+                            <div class="factor-item">
+                                <span class="factor-label">Batsman Stadium Avg</span>
+                                <span class="factor-value" id="batsmanStadium">-</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-label">Bowler Stadium Economy</span>
+                                <span class="factor-value" id="bowlerStadium">-</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-label">Head-to-Head Avg</span>
+                                <span class="factor-value" id="headToHead">-</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-label">Pitch Condition</span>
+                                <span class="factor-value" id="pitchCondition">-</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-label">Over Phase</span>
+                                <span class="factor-value" id="overPhase">-</span>
+                            </div>
+                            <div class="factor-item">
+                                <span class="factor-label">Wicket Pressure</span>
+                                <span class="factor-value" id="wicketPressure">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="probability-section">
+                        <h3>Probability Distribution</h3>
+                        <div class="probability-bars">
+                            <div class="prob-bar" data-runs="0">
+                                <div class="prob-bar-fill"></div>
+                                <span class="prob-label">0</span>
+                                <span class="prob-value">0%</span>
+                            </div>
+                            <div class="prob-bar" data-runs="1">
+                                <div class="prob-bar-fill"></div>
+                                <span class="prob-label">1</span>
+                                <span class="prob-value">0%</span>
+                            </div>
+                            <div class="prob-bar" data-runs="2">
+                                <div class="prob-bar-fill"></div>
+                                <span class="prob-label">2</span>
+                                <span class="prob-value">0%</span>
+                            </div>
+                            <div class="prob-bar" data-runs="3">
+                                <div class="prob-bar-fill"></div>
+                                <span class="prob-label">3</span>
+                                <span class="prob-value">0%</span>
+                            </div>
+                            <div class="prob-bar" data-runs="4">
+                                <div class="prob-bar-fill"></div>
+                                <span class="prob-label">4</span>
+                                <span class="prob-value">0%</span>
+                            </div>
+                            <div class="prob-bar" data-runs="5">
+                                <div class="prob-bar-fill"></div>
+                                <span class="prob-label">5</span>
+                                <span class="prob-value">0%</span>
+                            </div>
+                            <div class="prob-bar" data-runs="6">
+                                <div class="prob-bar-fill"></div>
+                                <span class="prob-label">6</span>
+                                <span class="prob-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error" class="error-message" style="display: none;"></div>
+
+            <!-- Final Score Prediction Section -->
+            <div id="finalScoreResults" class="results-container" style="display: none;">
+                <h2>Final Score Prediction</h2>
+                <div class="prediction-card">
+                    <div class="predicted-score final-score-display">
+                        <span class="score-label">Predicted Final Score</span>
+                        <span class="score-value" id="finalScoreValue">0</span>
+                        <span class="score-range" id="finalScoreRange">Range: 0 - 0</span>
+                    </div>
+                    
+                    <div class="final-score-details">
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <span class="detail-label">Current Score</span>
+                                <span class="detail-value" id="currentScoreDisplay">0</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Runs Remaining</span>
+                                <span class="detail-value" id="runsRemaining">0</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Overs Remaining</span>
+                                <span class="detail-value" id="oversRemaining">0.0</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Wickets Remaining</span>
+                                <span class="detail-value" id="wicketsRemaining">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-item">
+                                <span class="detail-label">Current Run Rate</span>
+                                <span class="detail-value" id="currentRunRate">0.00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Projected Run Rate</span>
+                                <span class="detail-value" id="projectedRunRate">0.00</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Pitch Condition</span>
+                                <span class="detail-value" id="finalPitchCondition">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Over Phase</span>
+                                <span class="detail-value" id="finalOverPhase">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prediction History Section -->
+            <div id="historySection" class="history-container" style="display: none;">
+                <h2>Prediction History</h2>
+                <div class="history-controls">
+                    <button id="clearHistory" class="clear-btn">Clear History</button>
+                </div>
+                <div id="historyList" class="history-list"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2024 IPL Score Predictor | Powered by Machine Learning</p>
+        </footer>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update moisture value display
+            const moistureSlider = document.getElementById('pitch_moisture');
+            const moistureValue = document.getElementById('moistureValue');
+            
+            if (moistureSlider && moistureValue) {
+                moistureSlider.addEventListener('input', (e) => {
+                    moistureValue.textContent = e.target.value + '%';
+                });
+            }
+
+            // Handle form submission
+            const predictionForm = document.getElementById('predictionForm');
+            if (predictionForm) {
+                predictionForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const formData = new FormData(e.target);
+                const formElement = e.target;
+                const data = {
+                    batting_team: formData.get('batting_team'),
+                    bowling_team: formData.get('bowling_team'),
+                    batsman: formData.get('batsman'),
+                    bowler: formData.get('bowler'),
+                    stadium: formData.get('stadium'),
+                    current_over: parseFloat(formData.get('current_over')),
+                    current_score: parseInt(formData.get('current_score')),
+                    current_wickets: parseInt(formData.get('current_wickets')),
+                    pitch_moisture: parseInt(formData.get('pitch_moisture')),
+                    ball_type: formElement.querySelector('input[name="ball_type"]:checked')?.value || 'regular'
+                };
+
+                // Validate required fields
+                if (!data.batting_team || !data.bowling_team || !data.batsman || !data.bowler || !data.stadium) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                const predictBtn = formElement.querySelector('.predict-btn');
+                const originalText = predictBtn.innerHTML;
+                predictBtn.disabled = true;
+                predictBtn.innerHTML = '<span>Predicting...</span>';
+
+                try {
+                    const response = await fetch('/api/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        displayResults(result, data);
+                        saveToHistory(result, data);
+                        document.getElementById('error').style.display = 'none';
+                    } else {
+                        throw new Error(result.error || 'Prediction failed');
+                    }
+                } catch (error) {
+                    document.getElementById('error').textContent = 'Error: ' + error.message;
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('results').style.display = 'none';
+                } finally {
+                    predictBtn.disabled = false;
+                    predictBtn.innerHTML = originalText;
+                }
+                });
+            }
+
+            function displayResults(result, inputData) {
+                // Display predicted runs
+                document.getElementById('predictedRuns').textContent = result.predicted_runs;
+
+                // Display factors
+                document.getElementById('batsmanStadium').textContent = result.factors.batsman_stadium_performance;
+                document.getElementById('bowlerStadium').textContent = result.factors.bowler_stadium_performance;
+                document.getElementById('headToHead').textContent = result.factors.head_to_head;
+                document.getElementById('pitchCondition').textContent = result.factors.pitch_condition;
+                document.getElementById('overPhase').textContent = result.factors.over_phase;
+                document.getElementById('wicketPressure').textContent = result.factors.wicket_pressure || '0 wickets down';
+
+                // Display probabilities
+                const probBars = document.querySelectorAll('.prob-bar');
+                probBars.forEach(bar => {
+                    const runs = parseInt(bar.dataset.runs);
+                    const probability = (result.probabilities[runs] || 0) * 100;
+                    const fill = bar.querySelector('.prob-bar-fill');
+                    const value = bar.querySelector('.prob-value');
+                    
+                    fill.style.width = probability + '%';
+                    value.textContent = probability.toFixed(1) + '%';
+                });
+
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // History management
+            function loadHistory() {
+                const history = JSON.parse(localStorage.getItem('ipl_predictions') || '[]');
+                if (history.length > 0) {
+                    document.getElementById('historySection').style.display = 'block';
+                    displayHistory(history);
+                }
+            }
+
+            function saveToHistory(result, inputData) {
+                const history = JSON.parse(localStorage.getItem('ipl_predictions') || '[]');
+                const prediction = {
+                    id: Date.now(),
+                    timestamp: new Date().toLocaleString(),
+                    input: inputData,
+                    prediction: result.predicted_runs,
+                    factors: result.factors,
+                    probabilities: result.probabilities
+                };
+                history.unshift(prediction); // Add to beginning
+                // Keep only last 50 predictions
+                if (history.length > 50) {
+                    history.pop();
+                }
+                localStorage.setItem('ipl_predictions', JSON.stringify(history));
+                displayHistory(history);
+                document.getElementById('historySection').style.display = 'block';
+            }
+
+            function displayHistory(history) {
+                const historyList = document.getElementById('historyList');
+                historyList.innerHTML = history.map(pred => `
+                    <div class="history-item">
+                        <div class="history-header">
+                            <span class="history-time">${pred.timestamp}</span>
+                            <span class="history-predicted">Predicted: <strong>${pred.prediction} runs</strong></span>
+                        </div>
+                        <div class="history-details">
+                            <div class="history-match">
+                                <span>${pred.input.batting_team} vs ${pred.input.bowling_team}</span>
+                                <span>${pred.input.batsman} vs ${pred.input.bowler}</span>
+                            </div>
+                            <div class="history-status">
+                                <span>Over: ${pred.input.current_over}</span>
+                                <span>Score: ${pred.input.current_score}/${pred.input.current_wickets}</span>
+                                <span>Stadium: ${pred.input.stadium}</span>
+                            </div>
+                            <div class="history-factors">
+                                <small>${pred.factors.pitch_condition} pitch | ${pred.factors.over_phase} overs | ${pred.factors.wicket_pressure}</small>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            function clearHistory() {
+                if (confirm('Are you sure you want to clear all prediction history?')) {
+                    localStorage.removeItem('ipl_predictions');
+                    document.getElementById('historySection').style.display = 'none';
+                }
+            }
+
+            // Final Score Prediction Button
+            const predictFinalBtn = document.getElementById('predictFinalBtn');
+            if (predictFinalBtn) {
+                predictFinalBtn.addEventListener('click', async () => {
+                    const formElement = document.getElementById('predictionForm');
+                    const formData = new FormData(formElement);
+                    
+                    const data = {
+                        batting_team: formData.get('batting_team'),
+                        bowling_team: formData.get('bowling_team'),
+                        stadium: formData.get('stadium'),
+                        current_over: parseFloat(formData.get('current_over')),
+                        current_score: parseInt(formData.get('current_score')),
+                        current_wickets: parseInt(formData.get('current_wickets')),
+                        pitch_moisture: parseInt(formData.get('pitch_moisture'))
+                    };
+
+                    // Validate required fields
+                    if (!data.batting_team || !data.bowling_team || !data.stadium) {
+                        alert('Please fill in all required fields (Teams and Stadium)');
+                        return;
+                    }
+
+                    const originalText = predictFinalBtn.innerHTML;
+                    predictFinalBtn.disabled = true;
+                    predictFinalBtn.innerHTML = '<span>Predicting...</span>';
+
+                    try {
+                        const response = await fetch('/api/predict-final', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            displayFinalScoreResults(result, data);
+                            document.getElementById('error').style.display = 'none';
+                        } else {
+                            throw new Error(result.error || 'Final score prediction failed');
+                        }
+                    } catch (error) {
+                        document.getElementById('error').textContent = 'Error: ' + error.message;
+                        document.getElementById('error').style.display = 'block';
+                        document.getElementById('finalScoreResults').style.display = 'none';
+                    } finally {
+                        predictFinalBtn.disabled = false;
+                        predictFinalBtn.innerHTML = originalText;
+                    }
+                });
+            }
+
+            function displayFinalScoreResults(result, inputData) {
+                document.getElementById('finalScoreValue').textContent = result.final_score;
+                document.getElementById('finalScoreRange').textContent = `Range: ${result.min_score} - ${result.max_score}`;
+                document.getElementById('currentScoreDisplay').textContent = inputData.current_score;
+                document.getElementById('runsRemaining').textContent = result.runs_remaining;
+                document.getElementById('oversRemaining').textContent = result.remaining_overs;
+                document.getElementById('wicketsRemaining').textContent = result.wickets_remaining;
+                document.getElementById('currentRunRate').textContent = result.current_run_rate;
+                document.getElementById('projectedRunRate').textContent = result.projected_run_rate;
+                document.getElementById('finalPitchCondition').textContent = result.factors.pitch_condition;
+                document.getElementById('finalOverPhase').textContent = result.factors.over_phase;
+                
+                document.getElementById('finalScoreResults').style.display = 'block';
+                document.getElementById('finalScoreResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // Initialize history
+            const clearHistoryBtn = document.getElementById('clearHistory');
+            if (clearHistoryBtn) {
+                clearHistoryBtn.addEventListener('click', clearHistory);
+            }
+            loadHistory();
+        }); // End of DOMContentLoaded
+    </script>
+</body>
+</html>
+
